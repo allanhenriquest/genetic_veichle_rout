@@ -1,0 +1,24 @@
+
+#Arquivos de Compilação
+
+*.o
+main
+*.out
+*.exe
+
+#Logs e Saídas
+
+stats..txt
+evolution_trace.csv
+
+#Python e Gráficos
+
+graficos_evolucao_*/
+*.png
+pycache/
+*.py[cod]
+
+#IDE
+
+.vscode/
+.idea/
