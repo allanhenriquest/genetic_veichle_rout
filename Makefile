@@ -1,25 +1,25 @@
 CXX = g++
 CXXFLAGS = -O3 -Wall
 
-all: main
+TARGET = main
 
-main: main.o heuristic.o EVRP.o stats.o stats_evolution.o
-$(CXX)$(CXXFLAGS) main.o heuristic.o EVRP.o stats.o stats_evolution.o -o main
+SRCS = main.cpp \
+       heuristic.cpp \
+       EVRP.cpp \
+       stats.cpp \
+       stats_evolution.cpp
 
-main.o: main.cpp
-$(CXX)$(CXXFLAGS) -c main.cpp
+OBJS = $(SRCS:.cpp=.o)
 
-heuristic.o: heuristic.cpp
-$(CXX)$(CXXFLAGS) -c heuristic.cpp
+all: $(TARGET)
 
-EVRP.o: EVRP.cpp
-$(CXX)$(CXXFLAGS) -c EVRP.cpp
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-stats.o: stats.cpp
-$(CXX)$(CXXFLAGS) -c stats.cpp
-
-stats_evolution.o: stats_evolution.cpp
-$(CXX)$(CXXFLAGS) -c stats_evolution.cpp
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-rm -f *.o main
+	rm -f $(OBJS) $(TARGET)
+
+.PHONY: all clean

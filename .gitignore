@@ -1,24 +1,60 @@
-
-#Arquivos de Compilação
+# =========================
+# Arquivos de compilação
+# =========================
 
 *.o
-main
+*.obj
 *.out
 *.exe
 
-#Logs e Saídas
+main
 
-stats..txt
-evolution_trace.csv
+# =========================
+# Logs e saídas do projeto
+# =========================
 
-#Python e Gráficos
+stats*.txt
+evolution_trace*.csv
+
+# =========================
+# Gráficos e resultados
+# =========================
 
 graficos_evolucao_*/
 *.png
-pycache/
-*.py[cod]
 
-#IDE
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# =========================
+# IDEs e editores
+# =========================
 
 .vscode/
 .idea/
+
+# =========================
+# Sistema operacional
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Arquivos temporários
+# =========================
+
+*.tmp
+*.log
+*~

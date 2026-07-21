@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits.h>
+#include <random>
 #include "EVRP.hpp"
 #include "heuristic.hpp"
 #include "stats_evolution.hpp"
@@ -16,13 +17,13 @@ const int POP_SIZE = 100;
 const int TOURNAMENT_SIZE = 5;
 const double CROSSOVER_RATE = 0.8;
 
-// --- VARIÁVEIS DE CONTROLE DINÂMICO E TRACKING ---
-double current_mutation_rate = 0.1; 
-int stagnation_counter = 0;         
-double last_best_fitness = INT_MAX; 
+// --- VARIÁVEIS DE CONTROLE DINÂMICO E RASTREAMENTO ---
+double current_mutation_rate = 0.1; // Taxa de mutação inicial (10%)
+int stagnation_counter = 0;         // Contador de gerações sem melhoria
+double last_best_fitness = INT_MAX; // Último melhor fitness registrado
 
-int current_run_id = 1;             
-int current_generation = 0;         
+int current_run_id = 1;             // Identificador da execução (run) atual
+int current_generation = 0;         // Contador de gerações da execução atual
 
 vector<Chromosome> population;
 
@@ -101,7 +102,7 @@ void initialize_heuristic(){
     last_best_fitness = INT_MAX;
     current_generation = 0;
     
-    // Inicializa o ficheiro de trace para a run atual
+    // Inicializa o arquivo de rastro para a execução atual
     init_evolution_file(current_run_id++, problem_instance);
     
     population.clear();
@@ -112,10 +113,15 @@ void initialize_heuristic(){
         base_permutation.push_back(i);
     }
 
+    // Criação do motor aleatório moderno, ancorado à semente principal (rand) do sistema.
+    // Isso garante que as suas 20 runs continuam perfeitamente determinísticas!
+    mt19937 rng(rand());
+
     for (int i = 0; i < POP_SIZE; ++i) {
         Chromosome ind;
         ind.permutation = base_permutation;
-        random_shuffle(ind.permutation.begin(), ind.permutation.end());
+        // Substituição do random_shuffle pelo shuffle moderno
+        shuffle(ind.permutation.begin(), ind.permutation.end(), rng);
         ind.fitness = INT_MAX; // Marca como não avaliado
         population.push_back(ind);
     }
@@ -129,13 +135,13 @@ void run_heuristic(){
     int best_idx = -1;
 
     for (int i = 0; i < POP_SIZE; ++i) {
-        // Só avalia os cromossomas recém gerados ou modificados
+        // Só avalia os cromossomos recém gerados ou modificados
         if (population[i].fitness == INT_MAX) {
             int temp_tour[ACTUAL_PROBLEM_SIZE * 2];
             int temp_steps = 0;
             
             decode_chromosome_to_solution(population[i], temp_tour, temp_steps);
-            // Avalia e desconta do budget computacional
+            // Avalia e desconta do orçamento computacional
             population[i].fitness = fitness_evaluation(temp_tour, temp_steps);
         }
 
@@ -151,9 +157,8 @@ void run_heuristic(){
         decode_chromosome_to_solution(population[best_idx], best_sol->tour, best_sol->steps);
     }
 
-    /* 2. GRAVAÇÃO DE ESTATÍSTICAS (O local correto!) */
-    // Agora todos os indivíduos têm o fitness validado
-    // Grava apenas a cada 50 gerações para manter os CSVs leves e rápidos
+    /* 2. GRAVAÇÃO DE ESTATÍSTICAS */
+    // Grava apenas a cada 50 gerações para manter os arquivos CSVs leves
     if (current_generation % 50 == 0) {
         PopStats current_stats = calculate_population_stats(population);
         log_generation_stats(current_generation, current_stats);
@@ -162,16 +167,16 @@ void run_heuristic(){
     /* 3. CONTROLE ADAPTATIVO DE PARÂMETROS (EIBEN) */
     if (current_gen_best_fitness < last_best_fitness) {
         last_best_fitness = current_gen_best_fitness;
-        stagnation_counter = 0; // Progresso! Reseta a estagnação.
+        stagnation_counter = 0; // Progresso detectado! Reseta a estagnação.
     } else {
         stagnation_counter++;   // Estagnou.
     }
 
-    // Choque Dinâmico para fugir de Ótimos Locais
+    // Choque Dinâmico para escapar de Ótimos Locais
     if (stagnation_counter >= 50) {
         current_mutation_rate = 0.50; // 50% Exploração agressiva
     } else {
-        current_mutation_rate = 0.10; // 10% Explotação e Ajuste Fino
+        current_mutation_rate = 0.10; // 10% Ajuste Fino (Explotação)
     }
 
     /* 4. FASE DE REPRODUÇÃO */
