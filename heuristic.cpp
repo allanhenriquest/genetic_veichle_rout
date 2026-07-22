@@ -113,14 +113,11 @@ void initialize_heuristic(){
         base_permutation.push_back(i);
     }
 
-    // Criação do motor aleatório moderno, ancorado à semente principal (rand) do sistema.
-    // Isso garante que as suas 20 runs continuam perfeitamente determinísticas!
     mt19937 rng(rand());
 
     for (int i = 0; i < POP_SIZE; ++i) {
         Chromosome ind;
         ind.permutation = base_permutation;
-        // Substituição do random_shuffle pelo shuffle moderno
         shuffle(ind.permutation.begin(), ind.permutation.end(), rng);
         ind.fitness = INT_MAX; // Marca como não avaliado
         population.push_back(ind);
@@ -130,13 +127,19 @@ void initialize_heuristic(){
 // --- MOTOR DO ALGORITMO GENÉTICO (POR GERAÇÃO) ---
 void run_heuristic(){
     
-    /* 1. FASE DE AVALIAÇÃO */
+    /* 1. FASE DE AVALIAÇÃO COM TRAVA DE SEGURANÇA */
     double current_gen_best_fitness = INT_MAX;
     int best_idx = -1;
 
     for (int i = 0; i < POP_SIZE; ++i) {
-        // Só avalia os cromossomos recém gerados ou modificados
+        // Se a população ainda não tem fitness avaliado
         if (population[i].fitness == INT_MAX) {
+            
+            // TRAVA DE SEGURANÇA: Se já atingimos o orçamento exato, interrompe!
+            if (get_evals() >= TERMINATION) {
+                break; // Sai do loop de avaliação sem consumir mais orçamento
+            }
+
             int temp_tour[ACTUAL_PROBLEM_SIZE * 2];
             int temp_steps = 0;
             
@@ -150,6 +153,9 @@ void run_heuristic(){
             best_idx = i;
         }
     }
+
+    // Se a trava de segurança barrou tudo e ninguém foi avaliado direito, encerra a função
+    if (best_idx == -1) return;
 
     // Atualiza o Melhor Global do Programa
     if (current_gen_best_fitness < best_sol->tour_length) {
